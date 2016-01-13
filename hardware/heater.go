@@ -14,7 +14,7 @@ type Heater struct {
 }
 
 func NewHeater() *Heater {
-	return &Heater
+	return &Heater{}
 }
 
 func (h* Heater) TurnOn() error {
