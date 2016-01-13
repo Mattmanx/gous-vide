@@ -1,12 +1,10 @@
 package main
 
 import (
-	"log"
-	"net/http"
-	"github.com/mattmanx/gous-vide/hardware"
 	"flag"
-	"strconv"
 	"fmt"
+	"github.com/mattmanx/gous-vide/hardware"
+	"github.com/mattmanx/gous-vide/server"
 )
 
 func main() {
@@ -26,11 +24,7 @@ func main() {
 	flag.Parse()
 
 	if *serve {
-		http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-			fmt.Fprintf(w, "Serving in 'serve' mode!")
-		})
-
-		log.Fatal(http.ListenAndServe(":" + strconv.Itoa(*port), nil))
+		server.Start(*port)
 	} else {
 		heater := hardware.NewHeater()
 
