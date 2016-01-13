@@ -15,9 +15,9 @@ func CurrentTempFahrenheit() (float64, error) {
 
 	if e != nil {
 		return -1, e
-	} else {
-		return toFahrenheit(tempCelsius), nil
 	}
+
+	return toFahrenheit(tempCelsius), nil
 }
 
 // Gets the temp in celsius from an assumed 'get-temp' command on the system path.
@@ -28,13 +28,13 @@ func getTemp() (float64, error) {
 
 	if e != nil {
 		return -1, e
-	} else {
-		s := strings.TrimSpace(string(output[:]))
-
-		f, err := strconv.ParseFloat(s, 64)
-
-		return f, err
 	}
+
+	s := strings.TrimSpace(string(output[:]))
+
+	f, err := strconv.ParseFloat(s, 64)
+
+	return f, err
 }
 
 // Helper function to convert celsius temp to fahrenheit

@@ -19,7 +19,9 @@ func NewHeaterController(heater *hardware.Heater) *HeaterController {
 }
 
 func (c *HeaterController) TurnOn(w http.ResponseWriter, r *http.Request) {
-	(*c.heater).TurnOn()
+	if e := (*c.heater).TurnOn(); e != nil {
+		respondError(w, e.Error())
+	}
 
 	isOn := (*c.heater).IsOn()
 
@@ -27,7 +29,9 @@ func (c *HeaterController) TurnOn(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *HeaterController) TurnOff(w http.ResponseWriter, r *http.Request) {
-	(*c.heater).TurnOff()
+	if e := (*c.heater).TurnOff(); e != nil {
+		respondError(w, e.Error())
+	}
 
 	isOn := (*c.heater).IsOn()
 
