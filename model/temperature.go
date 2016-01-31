@@ -2,6 +2,7 @@ package model
 
 import (
 	"time"
+	"fmt"
 )
 
 type TemperatureScale int
@@ -23,4 +24,22 @@ type TemperatureReading struct {
 type TemperatureSummary struct {
 	Readings []TemperatureReading 	`json:"readings"`
 	Scale    TemperatureScale 		`json:"scale"`
+}
+
+// Simple convenience method to convert from one temperature scale to another
+func ConvertTemperature(temperature float64, from TemperatureScale, to TemperatureScale) float64 {
+	if from == to {
+		return temperature
+	}
+
+	switch {
+	case from == to:
+		return temperature
+	case from == CELSIUS && to == FAHRENHEIT:
+		return temperature * 9 / 5 + 32
+	case from == FAHRENHEIT && to == CELSIUS:
+		return (temperature - 32) * 5 / 9
+	default:
+		panic(fmt.Errorf("Unknown temperature scale combination, %v to %v", from, to))
+	}
 }

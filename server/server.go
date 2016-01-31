@@ -7,9 +7,13 @@ import (
 	"net/http"
 	"log"
 	"github.com/mattmanx/gous-vide/hardware"
+	"github.com/mattmanx/gous-vide/db"
 )
 
 func Start(port int) {
+	db.Open()
+	defer db.Close()
+
 	router := newRouter()
 
 	// Create dependencies for controllers
@@ -18,8 +22,9 @@ func Start(port int) {
 	// Create controllers
 	// -- tempController := controller.NewTempController
 	heaterController := controller.NewHeaterController(heater)
+	tempController := controller.NewTempController()
 
-	controllers := []controller.Controller{heaterController}
+	controllers := []controller.Controller{heaterController, tempController}
 
 	// Register with router
 	register(controllers, router)

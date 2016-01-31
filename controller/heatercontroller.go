@@ -21,27 +21,33 @@ func NewHeaterController(heater *hardware.Heater) *HeaterController {
 func (c *HeaterController) TurnOn(w http.ResponseWriter, r *http.Request) {
 	if e := (*c.heater).TurnOn(); e != nil {
 		respondError(w, e.Error())
+
+		return
 	}
 
-	isOn := (*c.heater).IsOn()
+	isOn := c.isOn()
 
-	respondSuccess(w, "Heater command processed", isOn)
+	respondHeaterSuccess(w, "Heater command processed", isOn)
+
 }
 
 func (c *HeaterController) TurnOff(w http.ResponseWriter, r *http.Request) {
 	if e := (*c.heater).TurnOff(); e != nil {
 		respondError(w, e.Error())
+
+		return
 	}
 
-	isOn := (*c.heater).IsOn()
+	isOn := c.isOn()
 
-	respondSuccess(w, "Heater command processed", isOn)
+	respondHeaterSuccess(w, "Heater command processed", isOn)
+
 }
 
 func (c *HeaterController) GetStatus(w http.ResponseWriter, r *http.Request) {
-	isOn := (*c.heater).IsOn()
+	isOn := c.isOn()
 
-	respondSuccess(w, "Heater status retrieved", isOn)
+	respondHeaterSuccess(w, "Heater status retrieved", isOn)
 }
 
 func (c* HeaterController) GetRoutes() Routes {
@@ -54,7 +60,11 @@ func (c* HeaterController) GetRoutes() Routes {
 	return routes
 }
 
-func respondSuccess(w http.ResponseWriter, message string, isOn bool) {
+func (c* HeaterController) isOn() bool {
+	return c.heater.IsOn()
+}
+
+func respondHeaterSuccess(w http.ResponseWriter, message string, isOn bool) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 
@@ -67,15 +77,6 @@ func respondSuccess(w http.ResponseWriter, message string, isOn bool) {
 	}
 
 	if err := json.NewEncoder(w).Encode(HeaterResponse{Message: message, Status: status}); err != nil {
-		panic(err)
-	}
-}
-
-func respondError(w http.ResponseWriter, message string) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusInternalServerError)
-
-	if err := json.NewEncoder(w).Encode(message); err != nil {
 		panic(err)
 	}
 }

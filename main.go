@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/mattmanx/gous-vide/hardware"
 	"github.com/mattmanx/gous-vide/server"
+	"github.com/mattmanx/gous-vide/db"
+	"github.com/mattmanx/gous-vide/model"
 )
 
 var (
@@ -26,9 +28,27 @@ func main() {
 	case "get-temp":
 		temp, e := hardware.CurrentTempCelsius()
 		if e != nil {
-			fmt.Errorf("Error when checking temperature %v", e)
-		} else {
-			fmt.Printf("Current temp celsius: %v", temp)
+			fmt.Printf("Error when checking temperature %v", e)
+
+			return
+		}
+
+		fmt.Printf("Current temp celsius: %v", temp)
+
+		// save the temperature to the database
+		e = db.Open()
+
+		if e != nil {
+			fmt.Printf("Error opening database: %v", e)
+			return
+		}
+
+		defer db.Close()
+
+		e = db.SaveTemperature(temp, model.CELSIUS)
+
+		if e != nil {
+			fmt.Printf("Error saving temperature to database: %v", e)
 		}
 	case "heater-on":
 		heater.TurnOn()
