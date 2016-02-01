@@ -8,10 +8,10 @@ type Controller interface {
    GetRoutes() Routes
 }
 
-// Uses the provided net/http/ResponseWriter to return an error 500 with the provided error message.
-func respondError(w http.ResponseWriter, message string) {
+// Uses the provided net/http/ResponseWriter to return an simple json response with a string message
+func respondMessage(statusCode int, w http.ResponseWriter, message string) {
    w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-   w.WriteHeader(http.StatusInternalServerError)
+   w.WriteHeader(statusCode)
 
    if err := json.NewEncoder(w).Encode(message); err != nil {
       panic(err)

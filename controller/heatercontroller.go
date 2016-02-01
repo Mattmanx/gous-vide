@@ -20,7 +20,7 @@ func NewHeaterController(heater *hardware.Heater) *HeaterController {
 
 func (c *HeaterController) TurnOn(w http.ResponseWriter, r *http.Request) {
 	if e := (*c.heater).TurnOn(); e != nil {
-		respondError(w, e.Error())
+		respondMessage(http.StatusInternalServerError, w, e.Error())
 
 		return
 	}
@@ -33,7 +33,7 @@ func (c *HeaterController) TurnOn(w http.ResponseWriter, r *http.Request) {
 
 func (c *HeaterController) TurnOff(w http.ResponseWriter, r *http.Request) {
 	if e := (*c.heater).TurnOff(); e != nil {
-		respondError(w, e.Error())
+		respondMessage(http.StatusInternalServerError, w, e.Error())
 
 		return
 	}

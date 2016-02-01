@@ -8,18 +8,28 @@ import (
 	"encoding/json"
 	"strconv"
 	"github.com/mattmanx/gous-vide/hardware"
+	"github.com/mattmanx/gous-vide/routine"
+	"io/ioutil"
+	"io"
 )
 
 const (
 	NARROW_RFC3339 = "2006-01-02T15:04"
 )
 
-type TempController struct {
-	//nothing for now
+type PollRequest struct {
+	Action string	`json:"action"`
+	IntervalMilliseconds int	`json:"intervalMilliseconds"`
 }
 
+type TempController struct {
+	poller *routine.TempPoller
+}
+
+// Creates a new TempController to handle requests related to temperature capture and recording.
+// TODO: Probably need to inject the temp poller in the future so we can ensure the same poller is used for programmed recipes
 func NewTempController() *TempController {
-	return &TempController{}
+	return &TempController{poller: routine.NewTempPoller()}
 }
 
 func (c *TempController) GetCurrentTemperature(w http.ResponseWriter, req *http.Request) {
@@ -37,14 +47,14 @@ func (c *TempController) GetCurrentTemperature(w http.ResponseWriter, req *http.
 	}
 
 	if err != nil {
-		respondError(w, fmt.Sprintf("Error parsing query param 'save'. Expected 'true' or 'false'. Error: %v", err))
+		respondMessage(http.StatusBadRequest, w, fmt.Sprintf("Error parsing query param 'save'. Expected 'true' or 'false'. Error: %v", err))
 		return
 	}
 
 	currentTemp, err = hardware.CurrentTempCelsius()
 
 	if err != nil {
-		respondError(w, fmt.Sprintf("Error retrieving current temperature. Error: %v", err))
+		respondMessage(http.StatusInternalServerError, w, fmt.Sprintf("Error retrieving current temperature. Error: %v", err))
 		return
 	}
 
@@ -53,7 +63,7 @@ func (c *TempController) GetCurrentTemperature(w http.ResponseWriter, req *http.
 	}
 
 	if err != nil {
-		respondError(w, fmt.Sprintf("Error saving current temperature. Error: %v", err))
+		respondMessage(http.StatusInternalServerError, w, fmt.Sprintf("Error saving current temperature. Error: %v", err))
 		return
 	}
 
@@ -100,7 +110,7 @@ func (c *TempController) GetHistoricalTemperatures(w http.ResponseWriter, req *h
 
 	//error checks before db lookup
 	if (err != nil) {
-		respondError(w, fmt.Sprintf("Error parsing 'earliest' or 'latest' query parameters. Expected date format %v. Error: %v", NARROW_RFC3339, err))
+		respondMessage(http.StatusBadRequest, w, fmt.Sprintf("Error parsing 'earliest' or 'latest' query parameters. Expected date format %v. Error: %v", NARROW_RFC3339, err))
 		return
 	}
 
@@ -114,12 +124,64 @@ func (c *TempController) GetHistoricalTemperatures(w http.ResponseWriter, req *h
 	}
 }
 
+// Handles updates to temperature polling. The command to stop or start polling should be provided within the JSON body
+// of the incoming request.  When a request to start polling is submitted, a positive millisecond poll interval should
+// also be provided.
+func (c *TempController) Poll(w http.ResponseWriter, req *http.Request) {
+	var poll PollRequest
+
+	body, err := ioutil.ReadAll(io.LimitReader(req.Body, 500000))
+
+	if err != nil {
+		panic(err)
+	}
+
+	if err := req.Body.Close(); err != nil {
+		panic(err)
+	}
+
+	if err := json.Unmarshal(body, &poll); err != nil {
+		respondMessage(http.StatusNotAcceptable, w, err.Error())
+	}
+
+	switch poll.Action {
+	case "START":
+		//validate interval > 0
+		if poll.IntervalMilliseconds <= 0 {
+			respondMessage(http.StatusBadRequest, w, fmt.Sprintf("Expected intervalMilliseconds field > 0. Got %v", poll.IntervalMilliseconds))
+			return
+		}
+
+		//call poller.start
+		err = c.poller.Start(poll.IntervalMilliseconds)
+
+		if err != nil {
+			respondMessage(http.StatusInternalServerError, w, fmt.Sprintf("Error starting temperature poller. Error %v", err))
+			return
+		}
+
+		respondMessage(http.StatusOK, w, fmt.Sprintf("Started polling temperature with interval %v", poll.IntervalMilliseconds))
+	case "STOP":
+		//call poller.stop
+		err = c.poller.Stop()
+
+		if err != nil {
+			respondMessage(http.StatusInternalServerError, w, fmt.Sprintf("Error stopping temperature poller. Error %v", err))
+			return
+		}
+
+		respondMessage(http.StatusOK, w, "Stopped polling temperature.")
+	default:
+		respondMessage(http.StatusBadRequest, w, fmt.Sprintf("Invalid 'action' value. Expected 'START' or 'STOP'. Got %v", poll.Action))
+	}
+}
 
 // Controller interface function, returns a list of routes handled by this controller
 func (c *TempController) GetRoutes() Routes {
 	routes := Routes{
 		Route{Name: "GetCurrentTemperature", Method: "GET", Pattern: "/thermometer/temperature/now", HandlerFunc: c.GetCurrentTemperature},
 		Route{Name: "GetTemperatureHistory", Method: "GET", Pattern: "/thermometer/temperature", HandlerFunc: c.GetHistoricalTemperatures},
+		Route{Name: "StartPolling", Method: "PUT", Pattern: "/thermometer/poll", HandlerFunc: c.Poll},
 	}
 
 	return routes
