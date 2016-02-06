@@ -14,6 +14,8 @@ import (
 const (
 	DEFAULT_DB = "gousvide.db"
 	TEMP_HIST_BUCKET = "TempHist"
+	RECIPE_BUCKET = "Recipes"
+	PROGRAM_HIST_BUCKET = "Programs"
 )
 
 var (
@@ -39,6 +41,24 @@ func Open() error {
 	// Create all of our buckets
 	db.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte(TEMP_HIST_BUCKET))
+		if err != nil {
+			return fmt.Errorf("can't create bucket TempHist: %s", err)
+		}
+
+		return nil
+	})
+
+	db.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte(RECIPE_BUCKET))
+		if err != nil {
+			return fmt.Errorf("can't create bucket TempHist: %s", err)
+		}
+
+		return nil
+	})
+
+	db.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte(PROGRAM_HIST_BUCKET))
 		if err != nil {
 			return fmt.Errorf("can't create bucket TempHist: %s", err)
 		}
@@ -122,6 +142,8 @@ func GetTempHistForDateRange(scale m.TemperatureScale, earliest time.Time, lates
 
 	return m.TemperatureSummary{temps, scale}
 }
+
+//TODO: Create new recipe run, update recipe run, create new recipe.
 
 // Converts the binary representations of the timestamp and temperature value, constructs a new TemperatureReading to
 // encapsulate these values, and returns a pointer to that temperature reading.

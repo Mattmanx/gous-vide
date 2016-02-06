@@ -181,7 +181,7 @@ func (c *TempController) GetRoutes() Routes {
 	routes := Routes{
 		Route{Name: "GetCurrentTemperature", Method: "GET", Pattern: "/thermometer/temperature/now", HandlerFunc: c.GetCurrentTemperature},
 		Route{Name: "GetTemperatureHistory", Method: "GET", Pattern: "/thermometer/temperature", HandlerFunc: c.GetHistoricalTemperatures},
-		Route{Name: "StartPolling", Method: "PUT", Pattern: "/thermometer/poll", HandlerFunc: c.Poll},
+		Route{Name: "Poll", Method: "PUT", Pattern: "/thermometer/poll", HandlerFunc: c.Poll},
 	}
 
 	return routes

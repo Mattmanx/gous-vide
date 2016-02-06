@@ -23,8 +23,9 @@ func Start(port int) {
 	// -- tempController := controller.NewTempController
 	heaterController := controller.NewHeaterController(heater)
 	tempController := controller.NewTempController()
+	programController := controller.NewProgramController(heater)
 
-	controllers := []controller.Controller{heaterController, tempController}
+	controllers := []controller.Controller{heaterController, tempController, programController}
 
 	// Register with router
 	register(controllers, router)
