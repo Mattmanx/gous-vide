@@ -16,12 +16,15 @@ const (
 	TEMP_HIST_BUCKET = "TempHist"
 	RECIPE_BUCKET = "Recipes"
 	PROGRAM_HIST_BUCKET = "Programs"
+	HEATER_HIST_BUCKET = "HeaterHist"
 )
 
 var (
 	db *bolt.DB
 	once sync.Once
 )
+
+//TODO: Open on init(), move model-specific functions to model modules
 
 // Opens the datasource encapsulated by this package, returning an error if the database cannot be opened
 func Open() error {
@@ -65,6 +68,17 @@ func Open() error {
 
 		return nil
 	})
+
+	db.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte(HEATER_HIST_BUCKET))
+		if err != nil {
+			return fmt.Errorf("can't create bucket TempHist: %s", err)
+		}
+
+		return nil
+	})
+
+	// TODO - Purge old records here
 
 	return nil
 }
